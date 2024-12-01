@@ -2,7 +2,6 @@ package problems
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -20,7 +19,9 @@ func SolveProblem1() (int, error) {
 		return -1, err
 	}
 
-	return calcTotalDistance(locationLists), nil
+	frequencies := getValueFrequencies(locationLists[1])
+
+	return getTotalSimilarityScore(locationLists[0], frequencies), nil
 }
 
 func processFile(data string) ([2][]int, error) {
@@ -39,20 +40,18 @@ func processFile(data string) ([2][]int, error) {
 		}
 	}
 
-	for i := 0; i < len(lists); i++ {
-		sort.Ints(lists[i])
-	}
-
 	return lists, nil
 }
 
-func calcTotalDistance(locationLists [2][]int) int {
-	var totalDistance int
+func getValueFrequencies(values []int) map[int]int {
+	frequencies := make(map[int]int)
 
-	for i := 0; i < len(locationLists[0]); i++ {
-		totalDistance += absInt(locationLists[0][i] - locationLists[1][i])
+	for _, element := range values {
+		currentFreq := frequencies[element]
+		frequencies[element] = currentFreq + 1
 	}
-	return totalDistance
+
+	return frequencies
 }
 
 func absInt(value int) int {
@@ -60,4 +59,14 @@ func absInt(value int) int {
 		return -value
 	}
 	return value
+}
+
+func getTotalSimilarityScore(values []int, frequencies map[int]int) int {
+	var totalSimilarity int
+
+	for _, element := range values {
+		totalSimilarity += element * frequencies[element]
+	}
+
+	return totalSimilarity
 }
