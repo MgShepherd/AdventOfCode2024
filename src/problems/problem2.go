@@ -37,21 +37,31 @@ func isReportSafe(report string) (bool, error) {
 		return false, nil
 	}
 	levels, err := convertToIntSlice(strings.Fields(report))
+	removedInvalid := false
+	increasing := isIncreasing(levels)
 
 	if err != nil {
 		fmt.Printf("Unable to process report: %s\n", report)
 		return false, err
 	}
 
-	var increasing = levels[0] < levels[1]
-
-	for i := 1; i < len(levels); i++ {
-		if !isLevelValid(levels[i-1], levels[i], increasing) {
-			return false, nil
+	for i := 0; i < len(levels)-1; i++ {
+		if !isLevelValid(levels[i], levels[i+1], increasing) {
+			if !removedInvalid {
+				levels = append(levels[:i], levels[i+1:]...)
+				i -= 1
+				removedInvalid = true
+			} else {
+				return false, nil
+			}
 		}
 	}
 
 	return true, nil
+}
+
+func isIncreasing(levels []int) bool {
+	return levels[0] < levels[1] && levels[1] < levels[2]
 }
 
 func convertToIntSlice(elements []string) ([]int, error) {
