@@ -16,13 +16,27 @@ func SolveProblem4() (int, error) {
 	foundWords := 0
 	for y := 0; y < len(grid); y++ {
 		for x := 0; x < len(grid[y]); x++ {
-			if grid[y][x] == "X" {
-				foundWords += seachAllDirections("M", x, y, []string{"A", "S"}, grid)
+			if grid[y][x] == "A" {
+				if findMasCross(x, y, grid) {
+					foundWords += 1
+				}
 			}
 		}
 	}
 
 	return foundWords, nil
+}
+
+func findMasCross(x, y int, grid [][]string) bool {
+	if (searchForString("M", x, y, -1, -1, grid) && searchForString("S", x, y, 1, 1, grid)) ||
+		(searchForString("M", x, y, 1, 1, grid) && searchForString("S", x, y, -1, -1, grid)) {
+		if (searchForString("M", x, y, 1, -1, grid) && searchForString("S", x, y, -1, 1, grid)) ||
+			(searchForString("M", x, y, -1, 1, grid) && searchForString("S", x, y, 1, -1, grid)) {
+			return true
+		}
+
+	}
+	return false
 }
 
 func convertToGrid(data string) [][]string {
@@ -38,28 +52,11 @@ func convertToGrid(data string) [][]string {
 	return grid
 }
 
-func seachAllDirections(letter string, xPos, yPos int, remaingLetters []string, grid [][]string) int {
-	numFound := 0
-	for yDir := -1; yDir < 2; yDir++ {
-		for xDir := -1; xDir < 2; xDir++ {
-			if searchForString(letter, xPos, yPos, xDir, yDir, remaingLetters, grid) {
-				numFound += 1
-			}
-		}
-	}
-
-	return numFound
-}
-
-func searchForString(letter string, xPos, yPos, xDir, yDir int, remaingLetters []string, grid [][]string) bool {
+func searchForString(letter string, xPos, yPos, xDir, yDir int, grid [][]string) bool {
 	x := xPos + xDir
 	y := yPos + yDir
 	if y >= 0 && x >= 0 && y < len(grid) && x < len(grid[y]) && grid[y][x] == letter {
-		if len(remaingLetters) == 0 {
-			return true
-		} else {
-			return searchForString(remaingLetters[0], x, y, xDir, yDir, remaingLetters[1:], grid)
-		}
+		return true
 	}
 
 	return false
