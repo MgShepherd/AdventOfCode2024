@@ -30,7 +30,7 @@ func SolveProblem5() (int, error) {
 	}
 
 	rules := getOrderingRules(ruleLines)
-	return getValidPagesSum(pageLines, rules), nil
+	return getInvalidPagesSum(pageLines, rules), nil
 }
 
 func getOrderingRules(lines []string) map[string][]string {
@@ -49,13 +49,14 @@ func getOrderingRules(lines []string) map[string][]string {
 	return rules
 }
 
-func getValidPagesSum(pages []string, rules map[string][]string) int {
+func getInvalidPagesSum(pages []string, rules map[string][]string) int {
 	validSum := 0
 	for _, page := range pages {
 		elements := strings.Split(page, ",")
-		if isPageValid(elements, rules) {
-			midPoint := len(elements) / 2
-			intVal, _ := strconv.Atoi(elements[midPoint])
+		if !isPageValid(elements, rules) {
+			validPage := makePageValid(elements, rules)
+			midPoint := len(validPage) / 2
+			intVal, _ := strconv.Atoi(validPage[midPoint])
 			validSum += intVal
 		}
 	}
@@ -73,4 +74,25 @@ func isPageValid(elements []string, rules map[string][]string) bool {
 	}
 
 	return true
+}
+
+func makePageValid(elements []string, rules map[string][]string) []string {
+	validPage := []string{}
+	elementsToAdd := elements
+
+	nextElementIdx := 0
+	for len(validPage) < len(elements) {
+		for i := 0; i < len(elementsToAdd); i++ {
+			if slices.Contains(rules[elementsToAdd[i]], elementsToAdd[nextElementIdx]) {
+				nextElementIdx = i
+				i = 0
+			}
+		}
+
+		validPage = append(validPage, elementsToAdd[nextElementIdx])
+		elementsToAdd = slices.Delete(elementsToAdd, nextElementIdx, nextElementIdx+1)
+		nextElementIdx = 0
+	}
+
+	return validPage
 }
