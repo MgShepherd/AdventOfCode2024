@@ -2,6 +2,8 @@ package problems
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/MgShepherd/AdventOfCode2024/src/utils"
 )
@@ -15,11 +17,11 @@ const (
 	DirRight
 )
 
-var directionFromStr = map[string]Direction{
-	"^": DirUp,
-	"v": DirDown,
-	">": DirLeft,
-	"<": DirRight,
+var directionToStr = map[Direction]string{
+	DirUp:    "^",
+	DirDown:  "v",
+	DirLeft:  ">",
+	DirRight: "<",
 }
 
 func (dir Direction) turnRight() Direction {
@@ -60,7 +62,7 @@ func SolveProblem6() (int, error) {
 		return 0, err
 	}
 
-	numSteps := getStepsTaken(grid, startX, startY)
+	numSteps := getNumLoops(grid, startX, startY)
 	return numSteps, nil
 }
 
@@ -76,20 +78,52 @@ func findStartingPosition(grid [][]string) (int, int, error) {
 	return 0, 0, fmt.Errorf("Unable to find starting position")
 }
 
-func getStepsTaken(grid [][]string, startX int, startY int) int {
+func getNumLoops(grid [][]string, startX int, startY int) int {
 	currentDir := DirUp
 	currentX, currentY := startX, startY
-	numVisitedLocations := 0
+	numLoops := 0
+	index := 0
 
 	for isPositionInBounds(currentX, currentY, grid) {
-		if grid[currentY][currentX] != "X" {
-			numVisitedLocations += 1
+		grid[currentY][currentX] = "V"
+		nextX, nextY, nextDir := move(grid, currentX, currentY, currentDir)
+		if isPositionInBounds(nextX, nextY, grid) && grid[nextY][nextX] != "#" && (currentX != nextX || currentY != nextY) && !strings.Contains(grid[nextY][nextX], "V") {
+			grid[nextY][nextX] = "#"
+			if isLoop(grid, currentX, currentY, currentDir, index) {
+				numLoops += 1
+			}
 		}
-		grid[currentY][currentX] = "X"
-		currentX, currentY, currentDir = move(grid, currentX, currentY, currentDir)
+		index += 1
+		currentX, currentY, currentDir = nextX, nextY, nextDir
 	}
 
-	return numVisitedLocations
+	return numLoops
+}
+
+func isLoop(grid [][]string, startX, startY int, startDir Direction, index int) bool {
+	currentX, currentY := startX, startY
+	currentDir := startDir
+	strIndex := strconv.Itoa(index)
+	for isPositionInBounds(currentX, currentY, grid) {
+		alreadyVisited := strings.Contains(grid[currentY][currentX], "V")
+		if !strings.Contains(grid[currentY][currentX], strIndex) && !alreadyVisited {
+			grid[currentY][currentX] = strIndex + directionToStr[currentDir]
+		} else if !strings.Contains(grid[currentY][currentX], strIndex) {
+			grid[currentY][currentX] = "V" + strIndex + directionToStr[currentDir]
+		} else {
+			grid[currentY][currentX] += directionToStr[currentDir]
+		}
+
+		nextX, nextY, nextDir := move(grid, currentX, currentY, currentDir)
+		if !isPositionInBounds(nextX, nextY, grid) {
+			return false
+		} else if strings.Contains(grid[nextY][nextX], strIndex) && strings.Contains(grid[nextY][nextX], directionToStr[nextDir]) {
+			return true
+		}
+		currentX, currentY, currentDir = nextX, nextY, nextDir
+	}
+
+	return false
 }
 
 func move(grid [][]string, currentX, currentY int, currentDir Direction) (int, int, Direction) {
