@@ -1,8 +1,6 @@
 package problems
 
 import (
-	"strings"
-
 	"github.com/MgShepherd/AdventOfCode2024/src/utils"
 )
 
@@ -11,7 +9,7 @@ func SolveProblem4() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	grid := convertToGrid(data)
+	grid := utils.ConvertToGrid(data)
 
 	foundWords := 0
 	for y := 0; y < len(grid); y++ {
@@ -37,19 +35,6 @@ func findMasCross(x, y int, grid [][]string) bool {
 
 	}
 	return false
-}
-
-func convertToGrid(data string) [][]string {
-	var grid [][]string
-	lines := strings.Split(data, "\n")
-
-	for _, line := range lines {
-		if len(strings.TrimSpace(line)) > 0 {
-			grid = append(grid, strings.Split(line, ""))
-		}
-	}
-
-	return grid
 }
 
 func searchForString(letter string, xPos, yPos, xDir, yDir int, grid [][]string) bool {
