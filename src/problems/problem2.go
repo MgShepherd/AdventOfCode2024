@@ -2,7 +2,6 @@ package problems
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/MgShepherd/AdventOfCode2024/src/utils"
@@ -36,7 +35,7 @@ func isReportSafe(report string) (bool, error) {
 	if len(strings.TrimSpace(report)) == 0 {
 		return false, nil
 	}
-	levels, err := convertToIntSlice(strings.Fields(report))
+	levels, err := utils.ConvertToIntSlice(strings.Fields(report))
 	removedInvalid := false
 	increasing := isIncreasing(levels)
 
@@ -62,22 +61,6 @@ func isReportSafe(report string) (bool, error) {
 
 func isIncreasing(levels []int) bool {
 	return levels[0] < levels[1] && levels[1] < levels[2]
-}
-
-func convertToIntSlice(elements []string) ([]int, error) {
-	var intElements []int
-
-	for _, element := range elements {
-		intVal, err := strconv.Atoi(element)
-
-		if err != nil {
-			return intElements, err
-		}
-
-		intElements = append(intElements, intVal)
-	}
-
-	return intElements, nil
 }
 
 func isLevelValid(prev, current int, increasing bool) bool {
