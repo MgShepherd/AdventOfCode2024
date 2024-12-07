@@ -13,15 +13,28 @@ type Operation int
 const (
 	OpMul Operation = iota
 	OpAdd
+	OpCat
 )
 
 func (o Operation) perform(val1, val2 int) int {
 	switch o {
 	case OpMul:
 		return val1 * val2
-	default:
+	case OpAdd:
 		return val1 + val2
+	default:
+		return concatValues(val1, val2)
 	}
+}
+
+func concatValues(val1, val2 int) int {
+	combined := strconv.Itoa(val1) + strconv.Itoa(val2)
+	result, err := strconv.Atoi(combined)
+	if err != nil {
+		fmt.Printf("Unable to concat values %d and %d\n", val1, val2)
+	}
+
+	return result
 }
 
 func SolveProblem7() (int, error) {
@@ -40,7 +53,7 @@ func SolveProblem7() (int, error) {
 				return 0, fmt.Errorf("Unable to process line %s\n", trimmedLine)
 			}
 
-			if checkOperation(target, operands, OpAdd) || checkOperation(target, operands, OpMul) {
+			if checkOperation(target, operands, OpAdd) || checkOperation(target, operands, OpMul) || checkOperation(target, operands, OpCat) {
 				validEquationSum += target
 			}
 		}
@@ -70,7 +83,7 @@ func checkOperation(target int, operands []int, operation Operation) bool {
 		return false
 	} else if len(operands) > 2 {
 		newOperands := append([]int{result}, operands[2:]...)
-		return checkOperation(target, newOperands, OpAdd) || checkOperation(target, newOperands, OpMul)
+		return checkOperation(target, newOperands, OpAdd) || checkOperation(target, newOperands, OpMul) || checkOperation(target, newOperands, OpCat)
 	}
 
 	return result == target
