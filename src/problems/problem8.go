@@ -49,7 +49,7 @@ func getNumAntinodeLocations(grid [][]string, locations map[string][]Point) int 
 	for _, v := range locations {
 		for i := 0; i < len(v)-1; i++ {
 			for j := i + 1; j < len(v); j++ {
-				points := getPointsFromAntennaLocations(v[i], v[j])
+				points := getPointsFromAntennaLocations(v[i], v[j], grid)
 				for _, point := range points {
 					addLocationIfUnique(&numLocations, grid, point)
 				}
@@ -59,34 +59,49 @@ func getNumAntinodeLocations(grid [][]string, locations map[string][]Point) int 
 	return numLocations
 }
 
-func getPointsFromAntennaLocations(location1, location2 Point) []Point {
+func getPointsFromAntennaLocations(location1, location2 Point, grid [][]string) []Point {
 	difference := Point{x: int(math.Abs(float64(location2.x - location1.x))),
 		y: int(math.Abs(float64(location2.y - location1.y)))}
 
 	points := []Point{}
-	points = append(points,
-		getPointFromDifference(difference, location1, location2),
-		getPointFromDifference(difference, location2, location1))
+	points = append(points, getPointsFromDifference(difference, location1, location2, grid)...)
 
 	return points
 }
 
-func getPointFromDifference(difference, currentPoint, otherPoint Point) Point {
-	newPoint := Point{x: -1, y: -1}
+func getPointsFromDifference(difference, startingPoint, otherPoint Point, grid [][]string) []Point {
+	currentPoint := startingPoint
+	points := []Point{}
+	for isPointInBounds(currentPoint, grid) {
+		points = append(points, currentPoint)
+		currentPoint = getNextPoint(currentPoint, otherPoint, difference)
+	}
 
+	currentPoint = otherPoint
+	for isPointInBounds(currentPoint, grid) {
+		points = append(points, currentPoint)
+		currentPoint = getNextPoint(currentPoint, startingPoint, difference)
+	}
+	return points
+}
+
+func getNextPoint(currentPoint, otherPoint, difference Point) Point {
+	newPoint := Point{x: -1, y: -1}
 	if otherPoint.x < currentPoint.x {
 		newPoint.x = currentPoint.x + difference.x
 	} else {
 		newPoint.x = currentPoint.x - difference.x
 	}
-
 	if otherPoint.y < currentPoint.y {
 		newPoint.y = currentPoint.y + difference.y
 	} else {
 		newPoint.y = currentPoint.y - difference.y
 	}
-
 	return newPoint
+}
+
+func isPointInBounds(point Point, grid [][]string) bool {
+	return point.x >= 0 && point.x < len(grid[0]) && point.y >= 0 && point.y < len(grid)
 }
 
 func getDistanceFromPoint(current, starting Point) int {
@@ -97,7 +112,7 @@ func getDistanceFromPoint(current, starting Point) int {
 }
 
 func addLocationIfUnique(numLocations *int, grid [][]string, point Point) {
-	if point.x >= 0 && point.x < len(grid[0]) && point.y >= 0 && point.y < len(grid) {
+	if isPointInBounds(point, grid) {
 		if !strings.Contains(grid[point.y][point.x], "_") {
 			*numLocations += 1
 			grid[point.y][point.x] += "_"
