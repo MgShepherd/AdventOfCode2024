@@ -8,6 +8,12 @@ import (
 	"github.com/MgShepherd/AdventOfCode2024/src/utils"
 )
 
+type Range struct {
+	value string
+	start int
+	size  int
+}
+
 func SolveProblem9() (int, error) {
 	data, err := utils.ReadProblemFile(9)
 	if err != nil {
@@ -15,15 +21,17 @@ func SolveProblem9() (int, error) {
 	}
 
 	data = strings.TrimSpace(data)
-	generatedMemory := generateMemory(strings.Split(data, ""))
-	sortMemory(generatedMemory)
+	generatedMemory, freeSpaceRanges, elementRanges := generateMemory(strings.Split(data, ""))
+	sortMemory(generatedMemory, freeSpaceRanges, elementRanges)
 	return computeChecksum(generatedMemory), nil
 }
 
-func generateMemory(data []string) []string {
+func generateMemory(data []string) ([]string, []Range, []Range) {
 	currentId := 0
 	isFile := true
 	decompressed := []string{}
+	freeSpaceRanges := []Range{}
+	elementRanges := []Range{}
 
 	for _, item := range data {
 		numRepeatedTimes, err := strconv.Atoi(item)
@@ -32,29 +40,39 @@ func generateMemory(data []string) []string {
 		}
 
 		if isFile {
-			decompressed = appendItem(decompressed, strconv.Itoa(currentId), numRepeatedTimes)
+			stringId := strconv.Itoa(currentId)
+			elementRange := Range{value: stringId, start: len(decompressed), size: numRepeatedTimes}
+			elementRanges = append(elementRanges, elementRange)
+			decompressed = appendItem(decompressed, stringId, numRepeatedTimes)
 			currentId += 1
 		} else {
+			freeRange := Range{value: ".", start: len(decompressed), size: numRepeatedTimes}
+			freeSpaceRanges = append(freeSpaceRanges, freeRange)
 			decompressed = appendItem(decompressed, ".", numRepeatedTimes)
 		}
 		isFile = !isFile
 	}
 
-	return decompressed
+	return decompressed, freeSpaceRanges, elementRanges
 }
 
-func sortMemory(data []string) {
-	endPointer := len(data) - 1
-
-	for i := 0; i < len(data); i++ {
-		if data[i] == "." {
-			endPointer = getNextEndPointer(data, endPointer)
-			if i > endPointer {
-				return
+func sortMemory(data []string, freeSpaceRanges, elementRanges []Range) {
+	for i := len(elementRanges) - 1; i >= 0; i-- {
+		for j := 0; j < len(freeSpaceRanges); j++ {
+			if freeSpaceRanges[j].start < elementRanges[i].start && freeSpaceRanges[j].size >= elementRanges[i].size {
+				insertValue(data, elementRanges[i].value, freeSpaceRanges[j].start, elementRanges[i].start, elementRanges[i].size)
+				freeSpaceRanges[j].start = freeSpaceRanges[j].start + elementRanges[i].size
+				freeSpaceRanges[j].size = freeSpaceRanges[j].size - elementRanges[i].size
+				break
 			}
-			swapItems(data, i, endPointer)
-			endPointer -= 1
 		}
+	}
+}
+
+func insertValue(data []string, element string, newStartPos, oldStartPos, size int) {
+	for i := 0; i < size; i++ {
+		data[newStartPos+i] = element
+		data[oldStartPos+i] = "."
 	}
 }
 
@@ -81,11 +99,6 @@ func getNextEndPointer(data []string, currentEndPointer int) int {
 		}
 	}
 	return -1
-}
-
-func swapItems(data []string, index1 int, index2 int) {
-	data[index1] = data[index2]
-	data[index2] = "."
 }
 
 func appendItem(data []string, item string, numTimes int) []string {
