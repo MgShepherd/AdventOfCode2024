@@ -7,7 +7,7 @@ import (
 	"github.com/MgShepherd/AdventOfCode2024/src/utils"
 )
 
-const numBlinks = 25
+const numBlinks = 75
 
 func SolveProblem11() (int, error) {
 	data, err := utils.ReadProblemFile(11)
@@ -16,29 +16,43 @@ func SolveProblem11() (int, error) {
 	}
 
 	stones := strings.Fields(data)
+	stoneMap := make(map[string]int)
+	for _, stone := range stones {
+		stoneMap[stone] += 1
+	}
+	numStones := 0
 	for i := 0; i < numBlinks; i++ {
-		stones = processBlink(stones)
+		stoneMap, numStones = processBlink(stoneMap)
 	}
 
-	return len(stones), nil
+	return numStones, nil
 }
 
-func processBlink(stones []string) []string {
-	newStones := []string{}
+func processBlink(stones map[string]int) (map[string]int, int) {
+	newStones := make(map[string]int)
 
-	for _, stone := range stones {
+	for stone, num := range stones {
 		if stone == "0" {
-			newStones = append(newStones, "1")
+			newStones["1"] += num
 		} else if len(stone)%2 == 0 {
 			midPoint := len(stone) / 2
-			newStones = append(newStones, convertToStone(stone[:midPoint]), convertToStone(stone[midPoint:]))
+			newStones[convertToStone(stone[:midPoint])] += num
+			newStones[convertToStone(stone[midPoint:])] += num
 		} else {
 			intVal, _ := strconv.Atoi(stone)
-			newStones = append(newStones, strconv.Itoa(intVal*2024))
+			newStones[strconv.Itoa(intVal*2024)] += num
 		}
 	}
 
-	return newStones
+	return newStones, getNumStones(newStones)
+}
+
+func getNumStones(stones map[string]int) int {
+	total := 0
+	for _, v := range stones {
+		total += v
+	}
+	return total
 }
 
 func convertToStone(number string) string {
