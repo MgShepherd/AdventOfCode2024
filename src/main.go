@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	result, err := problems.SolveProblem11()
+	result, err := problems.SolveProblem12()
 	if err != nil {
 		fmt.Printf("Unable to solve problem due to following error:\n%s", err)
 		return
