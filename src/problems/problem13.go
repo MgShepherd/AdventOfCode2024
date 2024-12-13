@@ -1,10 +1,12 @@
 package problems
 
 import (
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/MgShepherd/AdventOfCode2024/src/utils"
+	"gonum.org/v1/gonum/mat"
 )
 
 func SolveProblem13() (int, error) {
@@ -26,55 +28,38 @@ func SolveProblem13() (int, error) {
 }
 
 func getCheapestWayToWin(lines []string) int {
-	aMovement := processLine(lines[0], 2)
-	bMovement := processLine(lines[1], 2)
-	prizePos := processLine(lines[2], 1)
+	aMovement := processLine(lines[0], 2, false)
+	bMovement := processLine(lines[1], 2, false)
+	prizePos := processLine(lines[2], 1, true)
 
-	cost := findPrize(aMovement, bMovement, prizePos)
-	return cost
+	aPresses, bPresses := solveSimultaneousEquations(aMovement, bMovement, prizePos)
+	if aPresses < 0 || bPresses < 0 {
+		return -1
+	}
+	aPressInt, bPressInt := int(math.Round(aPresses)), int(math.Round(bPresses))
+	if aPressInt*aMovement.x+bPressInt*bMovement.x == prizePos.x && aPressInt*aMovement.y+bPressInt*bMovement.y == prizePos.y {
+		return int(math.Round(aPresses))*3 + int(math.Round(bPresses))
+	}
+	return -1
 }
 
-func processLine(line string, startLocation int) Position {
+func solveSimultaneousEquations(aVals, bVals, prizeVals Position) (float64, float64) {
+	eq := mat.NewDense(2, 2, []float64{float64(aVals.x), float64(bVals.x), float64(aVals.y), float64(bVals.y)})
+	results := mat.NewVecDense(2, []float64{float64(prizeVals.x), float64(prizeVals.y)})
+
+	var result mat.VecDense
+	_ = result.SolveVec(eq, results)
+	return result.AtVec(0), result.AtVec(1)
+}
+
+func processLine(line string, startLocation int, prizeLine bool) Position {
 	elements := strings.Fields(line)
 
 	xElement, _ := strconv.Atoi(elements[startLocation][2 : len(elements[startLocation])-1])
 	yElement, _ := strconv.Atoi(elements[startLocation+1][2:])
 
+	if prizeLine {
+		return Position{x: xElement + 10000000000000, y: yElement + 10000000000000}
+	}
 	return Position{x: xElement, y: yElement}
-}
-
-func findPrize(aMovement, bMovement, prizePosition Position) int {
-	maxAPresses := getMaxButtonPresses(aMovement, prizePosition)
-	maxBPresses := getMaxButtonPresses(bMovement, prizePosition)
-
-	minCost := -1
-	for i := 0; i <= maxAPresses; i++ {
-		for j := 0; j <= maxBPresses; j++ {
-			position := Position{x: (aMovement.x * i) + (bMovement.x * j), y: (aMovement.y * i) + (bMovement.y * j)}
-			if position == prizePosition {
-				cost := i*3 + j
-				if minCost == -1 || cost < minCost {
-					minCost = cost
-				}
-				break
-			} else if position.x > prizePosition.x || position.y > prizePosition.y {
-				break
-			}
-		}
-	}
-
-	return minCost
-}
-
-func getMaxButtonPresses(buttonMovement, prizePosition Position) int {
-	xVal := prizePosition.x / buttonMovement.x
-	yVal := prizePosition.y / buttonMovement.y
-
-	if xVal > 100 && yVal > 100 {
-		return 100
-	}
-	if xVal < yVal {
-		return xVal
-	}
-	return yVal
 }
