@@ -18,10 +18,23 @@ func ConvertToGrid(data string) [][]string {
 	return grid
 }
 
-func PrintGrid(grid [][]string) {
+func PrintGrid[T string | int](grid [][]T) {
 	for y := 0; y < len(grid); y++ {
 		for x := 0; x < len(grid[0]); x++ {
-			fmt.Printf("%s", grid[y][x])
+			fmt.Printf("%v", grid[y][x])
+		}
+		fmt.Println()
+	}
+}
+
+func PrintGridNoZero(grid [][]int) {
+	for y := 0; y < len(grid); y++ {
+		for x := 0; x < len(grid[0]); x++ {
+			if grid[y][x] != 0 {
+				fmt.Printf("%v", grid[y][x])
+			} else {
+				fmt.Printf(".")
+			}
 		}
 		fmt.Println()
 	}

@@ -1,6 +1,7 @@
 package problems
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -14,7 +15,6 @@ type Robot struct {
 
 const BATHROOM_WIDTH = 101
 const BATHROOM_HEIGHT = 103
-const NUM_SECONDS = 100
 
 func SolveProblem14() (int, error) {
 	data, err := utils.ReadProblemFile(14)
@@ -23,8 +23,8 @@ func SolveProblem14() (int, error) {
 	}
 
 	robots := convertToRobots(data)
-	simulateRobotMovements(robots)
-	return getSafetyFactor(robots), nil
+	numSteps := simulateRobotMovements(robots)
+	return numSteps, nil
 }
 
 func convertToRobots(data string) []Robot {
@@ -41,8 +41,10 @@ func convertToRobots(data string) []Robot {
 	return robots
 }
 
-func simulateRobotMovements(robots []Robot) {
-	for i := 0; i < NUM_SECONDS; i++ {
+func simulateRobotMovements(robots []Robot) int {
+	numSeconds := 1
+	grid := convertToGrid(robots)
+	for true {
 		for j := 0; j < len(robots); j++ {
 			robots[j].position.x = (robots[j].position.x + robots[j].velocity.x) % BATHROOM_WIDTH
 			if robots[j].position.x < 0 {
@@ -53,35 +55,42 @@ func simulateRobotMovements(robots []Robot) {
 				robots[j].position.y = BATHROOM_HEIGHT + robots[j].position.y
 			}
 		}
+		grid = convertToGrid(robots)
+		if numSeconds == 7138 {
+			fmt.Println("Num seconds:", numSeconds)
+			utils.PrintGridNoZero(grid)
+			fmt.Println()
+			break
+		}
+		numSeconds += 1
 	}
+
+	return numSeconds
 }
 
-func getSafetyFactor(robots []Robot) int {
-	xSplit, ySplit := BATHROOM_WIDTH/2, BATHROOM_HEIGHT/2
-
-	quadValues := [4]int{0, 0, 0, 0}
-
-	for _, robot := range robots {
-		if robot.position.y < ySplit {
-			if robot.position.x < xSplit {
-				quadValues[0] += 1
-			} else if robot.position.x > xSplit {
-				quadValues[1] += 1
-			}
-		} else if robot.position.y > ySplit {
-			if robot.position.x < xSplit {
-				quadValues[2] += 1
-			} else if robot.position.x > xSplit {
-				quadValues[3] += 1
+func containsTree(grid [][]int) bool {
+	for y := 0; y < len(grid); y++ {
+		for x := 0; x < len(grid[y])-5; x++ {
+			if grid[y][x] > 0 && grid[y][x+1] > 0 && grid[y][x+2] > 0 && grid[y][x+3] > 0 && grid[y][x+4] > 0 {
+				return true
 			}
 		}
 	}
 
-	total := 1
-	for _, val := range quadValues {
-		total *= val
+	return false
+}
+
+func convertToGrid(robots []Robot) [][]int {
+	grid := make([][]int, BATHROOM_HEIGHT)
+	for i := range grid {
+		grid[i] = make([]int, BATHROOM_WIDTH)
 	}
-	return total
+
+	for _, robot := range robots {
+		grid[robot.position.y][robot.position.x] += 1
+	}
+
+	return grid
 }
 
 func processRobot(line string) Robot {
